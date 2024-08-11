@@ -54,6 +54,9 @@ for message in st.session_state.chat_history:
     with st.chat_message("Human"):
       st.markdown(message.content)
 
+user_query = st.chat_input("Type a message...") #stores user input
+if user_query is not None and user_query.strip() != "": #if not none or empty (.strip clears whitespace)
+  st.session_state.chat_history.append(HumanMessage(content=user_query))
   
-
-st.chat_input("Type a message...")
+  with st.chat_message("Human"):
+    st.markdown(user_query)
