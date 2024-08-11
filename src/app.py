@@ -60,3 +60,9 @@ if user_query is not None and user_query.strip() != "": #if not none or empty (.
   
   with st.chat_message("Human"):
     st.markdown(user_query)
+
+  with st.chat_message("AI"):
+    response = "I don't know how to respond to that."
+    st.markdown(response)
+    st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
+  
