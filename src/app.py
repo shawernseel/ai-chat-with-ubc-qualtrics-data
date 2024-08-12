@@ -17,11 +17,24 @@ def get_sql_chain(db):
   #creating template for prompt
   template = """
     You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
-    Based on the table schema below, question, sql query, and sql response, write a natural language response.
+    Based on the table schema below, write a SQL query that would answer the user's question. Take the conversation history into account.
+    
     <SCHEMA>{schema}</SCHEMA>
-
+    
     Conversation History: {chat_history}
-    User question: {question}
+    
+    Write only the SQL query and nothing else. Do not wrap the SQL query in any other text, not even backticks.
+    
+    For example:
+    Question: which 3 artists have the most tracks?
+    SQL Query: SELECT ArtistId, COUNT(*) as track_count FROM Track GROUP BY ArtistId ORDER BY track_count DESC LIMIT 3;
+    Question: Name 10 artists
+    SQL Query: SELECT Name FROM Artist LIMIT 10;
+    
+    Your turn:
+    
+    Question: {question}
+    SQL Query:
     """
   
   prompt = ChatPromptTemplate.from_template(template)
@@ -40,6 +53,38 @@ def get_sql_chain(db):
     | llm
     | StrOutputParser() #makes sure we return a str
   )
+
+def get_response(user_query: str, db: SQLDatabase, chat_history: list):
+  sql_chain = get_sql_chain(db)
+
+  template = """
+    You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
+    Based on the table schema below, question, sql query, and sql response, write a natural language response.
+    <SCHEMA>{schema}</SCHEMA>
+
+    Conversation History: {chat_history}
+    SQL Query: <SQL>{query}</SQL>
+    User question: {question}
+    SQL Response: {response}
+    """
+  prompt = ChatPromptTemplate.from_template(template)
+  llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
+
+  chain = (
+    RunnablePassthrough.assign(query=sql_chain).assign(
+      schema=lambda _: db.get_table_info(), #same idea as above just using labmda
+      response=lambda vars: db.run(vars["query"]),
+    )
+    | prompt
+    | llm
+    | StrOutputParser()    
+  )
+
+  return chain.invoke({
+    "question": user_query,
+    "chat_history": chat_history,
+  })
+
   
 
 if "chat_history" not in st.session_state:
@@ -97,10 +142,11 @@ if user_query is not None and user_query.strip() != "": #if not none or empty (.
 
   with st.chat_message("AI"):
     sql_chain = get_sql_chain(st.session_state.db) #gets the chain
-    response = sql_chain.invoke({ #abstracted langchain api call (excecutes the chain using parameters)
-      "chat_history": st.session_state.chat_history,
-      "question": user_query
-    })
+    response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
+    #response = sql_chain.invoke({ #abstracted langchain api call (excecutes the chain using parameters)
+    #  "chat_history": st.session_state.chat_history,
+    #  "question": user_query
+    #})
     st.markdown(response)
   st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
   
