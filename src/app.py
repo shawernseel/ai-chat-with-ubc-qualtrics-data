@@ -1,12 +1,46 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from langchain_community.utilities import SQLDatabase
+from langchain_core.output_parsers import StrOutputParser
+from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 import streamlit as st
 
 def init_database(user: str, password: str, host: str, port: str, database: str) -> SQLDatabase:
   db_uri = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
   return SQLDatabase.from_uri(db_uri)
+
+def get_sql_chain(db):
+  #creating template for prompt
+  template = """
+    You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
+    Based on the table schema below, question, sql query, and sql response, write a natural language response.
+    <SCHEMA>{schema}</SCHEMA>
+
+    Conversation History: {chat_history}
+    User question: {question}
+    """
+  
+  prompt = ChatPromptTemplate.from_template(template)
+  #llm = ChatOpenAI(model="gpt-4o")
+  #llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0)
+  llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
+
+  def get_schema(_):
+    return db.get_table_info() #returns schema of database
+
+  #chain
+  return (
+    RunnablePassthrough.assign(schema=get_schema) #database schema is static per session so we use .assign
+    #| (lambda inputs: {**inputs, "schema": get_schema()}) #could use this instead for dynamic database
+    | prompt
+    | llm
+    | StrOutputParser() #makes sure we return a str
+  )
+  
 
 if "chat_history" not in st.session_state:
   #init variable chat_history stored as a streamlit session_state to keep track of chat history
@@ -37,7 +71,7 @@ with st.sidebar:
   if st.button("Connect"): #if button clicked
     with st.spinner("Connecting to database..."):
       db = init_database(
-        st.session_state["User"],
+        st.session_state["User"], #streamlit easy way to fetch text input
         st.session_state["Password"],
         st.session_state["Host"],
         st.session_state["Port"],
@@ -59,10 +93,14 @@ if user_query is not None and user_query.strip() != "": #if not none or empty (.
   st.session_state.chat_history.append(HumanMessage(content=user_query))
   
   with st.chat_message("Human"):
-    st.markdown(user_query)
+    st.markdown(user_query) #renders text wutg nardiwb formatting
 
   with st.chat_message("AI"):
-    response = "I don't know how to respond to that."
+    sql_chain = get_sql_chain(st.session_state.db) #gets the chain
+    response = sql_chain.invoke({ #abstracted langchain api call (excecutes the chain using parameters)
+      "chat_history": st.session_state.chat_history,
+      "question": user_query
+    })
     st.markdown(response)
-    st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
+  st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
   
