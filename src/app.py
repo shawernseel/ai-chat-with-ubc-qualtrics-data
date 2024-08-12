@@ -73,14 +73,14 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
   chain = (
     RunnablePassthrough.assign(query=sql_chain).assign(
       schema=lambda _: db.get_table_info(), #same idea as above just using labmda
-      response=lambda vars: db.run(vars["query"]),
+      response=lambda vars: db.run(vars["query"]), #gets query response from actual db
     )
     | prompt
     | llm
     | StrOutputParser()    
   )
 
-  return chain.invoke({
+  return chain.invoke({ #abstracted langchain api call (excecutes the chain using parameters)
     "question": user_query,
     "chat_history": chat_history,
   })
@@ -140,13 +140,11 @@ if user_query is not None and user_query.strip() != "": #if not none or empty (.
   with st.chat_message("Human"):
     st.markdown(user_query) #renders text wutg nardiwb formatting
 
-  with st.chat_message("AI"):
-    sql_chain = get_sql_chain(st.session_state.db) #gets the chain
-    response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
-    #response = sql_chain.invoke({ #abstracted langchain api call (excecutes the chain using parameters)
-    #  "chat_history": st.session_state.chat_history,
-    #  "question": user_query
-    #})
-    st.markdown(response)
+  if 'db' not in st.session_state:
+        st.error("Please connect to the database first.")
+  else:
+    with st.chat_message("AI"):
+      response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
+      st.markdown(response)
   st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
   
