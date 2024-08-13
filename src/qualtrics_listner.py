@@ -16,7 +16,7 @@ headers = {
     "content-type": "application/json",
     "x-api-token": api_key,
    }
-url = "https://{0}.qualtrics.com/API/v3/surveys/{1}/responses".format(data_center,survey_id)
+url = "https://{0}.qualtrics.com/API/v3/surveys/{1}/responses/{2}".format(data_center,survey_id,)
 rsp = requests.get(url, headers=headers)
 print(rsp.json())
 
