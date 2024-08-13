@@ -8,6 +8,7 @@ FLUSH PRIVILEGES;
 quick commands:
 source .venv/Scripts/activate
 streamlit run src/app.py
+python src/qualtrics_listner.py
 
 retlode .env:
 source .env
