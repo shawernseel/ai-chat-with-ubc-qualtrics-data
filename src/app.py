@@ -71,7 +71,7 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
   llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
 
   chain = (
-    RunnablePassthrough.assign(query=sql_chain).assign(
+    RunnablePassthrough.assign(query=sql_chain).assign( #we want to assign sql chain first before running other chain
       schema=lambda _: db.get_table_info(), #same idea as above just using labmda
       response=lambda vars: db.run(vars["query"]), #gets query response from actual db
     )
@@ -85,7 +85,6 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
     "chat_history": chat_history,
   })
 
-  
 
 if "chat_history" not in st.session_state:
   #init variable chat_history stored as a streamlit session_state to keep track of chat history

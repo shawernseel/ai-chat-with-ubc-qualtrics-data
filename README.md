@@ -1,4 +1,8 @@
 Make sure to use a mysql user with read only permissions
+CREATE USER 'readonly_user'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT ON *.* TO 'readonly_user'@'localhost';
+FLUSH PRIVILEGES;
+
 
 quick commands:
 source .venv/Scripts/activate
