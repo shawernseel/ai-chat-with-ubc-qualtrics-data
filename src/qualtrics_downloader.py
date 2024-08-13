@@ -18,7 +18,7 @@ path_to_local_folder = os.getenv("path_to_local_folder")
 
 #User Parameters
 api_token: str = os.getenv("api_token")
-file_format = "csv"
+file_format = "json"
 data_center = os.getenv("data_center")
 
 #Static Parameters
@@ -32,11 +32,12 @@ headers = {
 
 # Step 1: Creating Data Export
 downloadRequestUrl = base_url
-downloadRequestPayload = '{"format":"' + file_format + '"}'
+downloadRequestPayload = '{"format":"' + file_format + '","compress":"false"}'
 downloadRequestResponse = requests.request("POST", downloadRequestUrl, data=downloadRequestPayload, headers=headers)
 progressId = downloadRequestResponse.json()["result"]["progressId"]
 print(downloadRequestResponse.text)
 
+'''
 # Step 2: Checking on Data Export Progress and waiting until export is ready
 while progressStatus != "complete" and progressStatus != "failed":
     print ("progressStatus=", progressStatus)
@@ -65,3 +66,4 @@ os.makedirs(path_to_local_folder, exist_ok=True)
 with zipfile.ZipFile(io.BytesIO(requestDownload.content)) as zip_ref:
     zip_ref.extractall(unique_folder_name)
 print(f'Complete. Files extracted to {unique_folder_name}')
+'''
