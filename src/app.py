@@ -138,13 +138,17 @@ if user_query is not None and user_query.strip() != "": #if not none or empty (.
   st.session_state.chat_history.append(HumanMessage(content=user_query))
   
   with st.chat_message("Human"):
-    st.markdown(user_query) #renders text wutg nardiwb formatting
+    st.markdown(user_query) #renders text with markdown formatting
 
   if 'db' not in st.session_state:
-        st.error("Please connect to the database first.")
+    st.error("Please connect to the database first.")
   else:
-    with st.chat_message("AI"):
-      response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
-      st.markdown(response)
-  st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
+    response = None
+    try:
+      with st.chat_message("AI"):
+        response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
+        st.markdown(response)
+    except Exception as e:
+        st.error("An error occurred while processing your request.")
+    st.session_state.chat_history.append(AIMessage(content=response)) #add to chat history
   
