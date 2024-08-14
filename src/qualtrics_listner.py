@@ -13,7 +13,7 @@ api_key = os.environ['API_KEY']
 data_center = os.environ['DATA_CENTER']
 
 #weblistner that handles qualtrics updating data 
-#Note: this code is currently unused but could be used as web listner to update live data
+#Note: this code is currently unused but could be used in an update as web listner to update live data
 def getReponse(d,dataCenter,apiToken):
     responseId = d['ResponseID']
     surveyId = d['SurveyID']
