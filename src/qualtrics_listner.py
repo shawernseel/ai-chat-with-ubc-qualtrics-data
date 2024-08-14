@@ -12,16 +12,8 @@ survey_id = os.environ['SURVEY_ID']
 api_key = os.environ['API_KEY']
 data_center = os.environ['DATA_CENTER']
 
-headers = {
-    "content-type": "application/json",
-    "x-api-token": api_key,
-   }
-url = "https://{0}.qualtrics.com/API/v3/surveys/{1}/responses/{2}".format(data_center,survey_id,)
-rsp = requests.get(url, headers=headers)
-print(rsp.json())
-
-#webhook handles qualtrics updating data
-'''
+#weblistner that handles qualtrics updating data 
+#Note: this code is currently unused but could be used as web listner to update live data
 def getReponse(d,dataCenter,apiToken):
     responseId = d['ResponseID']
     surveyId = d['SurveyID']
@@ -80,4 +72,3 @@ try:
     run()
 except KeyboardInterrupt:
     sys.exit(0)
-'''
