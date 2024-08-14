@@ -8,6 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 import streamlit as st
+import load_database
 
 def init_database(user: str, password: str, host: str, port: str, database: str) -> SQLDatabase:
   db_uri = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
@@ -90,29 +91,29 @@ if "chat_history" not in st.session_state:
   #init variable chat_history stored as a streamlit session_state to keep track of chat history
   st.session_state.chat_history = [
       #langchain seperates ai vs human messages into classes to make them easier to manage
-      AIMessage(content="Hello! I'm an SQL assistant. Ask me anything about your database."),
+      AIMessage(content="Hello! I'm an Qualtrics data assistant. Ask me anything about your database."),
   ]
 
 load_dotenv()
 
 #streamlit webapp setup
-st.set_page_config(page_title="Chat with MySQL", page_icon=":speech_balloon:") #streamlit webapp setup
-st.title("Chat with MySQL")
+st.set_page_config(page_title="Chat with Qualtrics Data", page_icon=":speech_balloon:") #streamlit webapp setup
+st.title("Chat with Qualtrics Data")
 
 #mysql database connection/ streamlit sidebar
 mysql_username = os.getenv("mysql_username")
 mysql_password = os.getenv("mysql_password")
 with st.sidebar:
   st.subheader("Settings")
-  st.write("This is a simple chat app using MySQL. Connect to the database and start chatting.")
+  st.write("This is a simple chat app using MySQL. Import your data below and start chatting.")
 
   st.text_input("Host", value="localhost", key="Host") #prefilled
   st.text_input("Port", value="3306", key="Port")
   st.text_input("User", value=mysql_username, key="User")
   st.text_input("Password", type="password", value=mysql_password, key="Password")
-  st.text_input("Database", value="Chinook", key="Database")
+  st.text_input("Database", value="qualtrics_DB", key="Database")
 
-  if st.button("Connect"): #if button clicked
+  if st.button("Connect"): #if button clicked (st creates button too)
     with st.spinner("Connecting to database..."):
       db = init_database(
         st.session_state["User"], #streamlit easy way to fetch text input
@@ -123,6 +124,19 @@ with st.sidebar:
       )
       st.session_state.db = db
       st.success("Connected to database!")
+
+  # importing UBC Qualtrics data
+  st.markdown("Use this button to initialize a new database with Qualtrics data.  \n(Note: this will overwrite the database you input.)")
+  if st.button("Import Data"): #if button clicked (st creates button too)
+    with st.spinner("Importing data to database..."):
+      load_database.init_qualtrics_data(
+        st.session_state["User"], #streamlit easy way to fetch text input
+        st.session_state["Password"],
+        st.session_state["Host"],
+        st.session_state["Port"],
+        st.session_state["Database"],
+      )
+      st.success("Imported Qualtrics data!")
       
 for message in st.session_state.chat_history:
   if isinstance(message, AIMessage):

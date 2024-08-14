@@ -58,8 +58,6 @@ def get_qualtrics_data():
     # Step 3: Downloading file
     requestDownloadUrl = base_url + fileId + '/file'
     qualtrics_json_data = requests.request("GET", requestDownloadUrl, headers=headers, stream=True)
-    print(qualtrics_json_data.content)
 
     return qualtrics_json_data
 
-print(get_qualtrics_data().content)
